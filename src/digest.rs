@@ -29,6 +29,7 @@ use core::num::Wrapping;
 
 mod sha1;
 mod sha2;
+mod sm3;
 
 #[derive(Clone)]
 pub(crate) struct BlockContext {
@@ -279,6 +280,7 @@ enum AlgorithmID {
     SHA384,
     SHA512,
     SHA512_256,
+    SM3,
 }
 
 impl PartialEq for Algorithm {
@@ -441,6 +443,29 @@ pub static SHA512_256: Algorithm = Algorithm {
         ],
     },
     id: AlgorithmID::SHA512_256,
+};
+
+/// sm3 hash
+pub static SM3_256: Algorithm = Algorithm {
+    output_len: 256 / 8,
+    chaining_len: 256 / 8,
+    block_len: 512 / 8,
+    len_len: 64 / 8,
+    block_data_order: sm3::sm3_block_data_order,
+    format_output: sha256_format_output,
+    initial_state: State {
+        as32: [
+            Wrapping(0x7380166fu32),
+            Wrapping(0x4914b2b9u32),
+            Wrapping(0x172442d7u32),
+            Wrapping(0xda8a0600u32),
+            Wrapping(0xa96f30bcu32),
+            Wrapping(0x163138aau32),
+            Wrapping(0xe38dee4du32),
+            Wrapping(0xb0fb0e4eu32),
+        ],
+    },
+    id: AlgorithmID::SM3,
 };
 
 #[derive(Clone, Copy)] // XXX: Why do we need to be `Copy`?

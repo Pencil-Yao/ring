@@ -173,6 +173,11 @@ name = "ring"
 [dependencies]
 getrandom = { version = "0.2.10" }
 untrusted = { version = "0.9" }
+libsm = { version = "0.5" }
+num-bigint = { version ="0.4" }
+num-traits = { version ="0.2.11" }
+lazy_static = { version = "1.4" }
+hex = { version = "0.4" }
 
 [target.'cfg(any(target_arch = "x86",target_arch = "x86_64", all(any(target_arch = "aarch64", target_arch = "arm"), any(target_os = "android", target_os = "fuchsia", target_os = "linux", target_os = "windows"))))'.dependencies]
 spin = { version = "0.9.8", default-features = false, features = ["once"] }
@@ -204,6 +209,7 @@ unstable-testing-arm-no-hw = []
 unstable-testing-arm-no-neon = []
 test_logging = []
 wasm32_unknown_unknown_js = ["getrandom/js"]
+internal_benches = []
 
 # XXX: debug = false because of https://github.com/rust-lang/rust/issues/34122
 

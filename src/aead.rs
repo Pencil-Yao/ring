@@ -121,6 +121,7 @@ impl<A> Eq for Aad<A> where A: Eq {}
 enum KeyInner {
     AesGcm(aes_gcm::Key),
     ChaCha20Poly1305(chacha20_poly1305::Key),
+    SM4CFB(sm4::Key),
 }
 
 impl hkdf::KeyType for &'static Algorithm {
@@ -187,6 +188,7 @@ enum AlgorithmID {
     AES_128_GCM,
     AES_256_GCM,
     CHACHA20_POLY1305,
+    SM4_CFB,
 }
 
 impl PartialEq for Algorithm {
@@ -247,4 +249,5 @@ mod poly1305;
 pub mod quic;
 mod sealing_key;
 mod shift;
+mod sm4;
 mod unbound_key;

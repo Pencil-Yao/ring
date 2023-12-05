@@ -35,6 +35,10 @@ pub type Limb = u32;
 pub const LIMB_BITS: usize = 64;
 #[cfg(target_pointer_width = "32")]
 pub const LIMB_BITS: usize = 32;
+#[cfg(target_pointer_width = "64")]
+pub type DoubleLimb = u128;
+#[cfg(target_pointer_width = "32")]
+pub type DoubleLimb = u64;
 
 #[cfg(target_pointer_width = "64")]
 #[derive(Debug, PartialEq)]
@@ -326,6 +330,23 @@ pub(crate) fn limbs_add_assign_mod(a: &mut [Limb], b: &[Limb], m: &[Limb]) {
         );
     }
     unsafe { LIMBS_add_mod(a.as_mut_ptr(), a.as_ptr(), b.as_ptr(), m.as_ptr(), m.len()) }
+}
+
+#[inline]
+pub(crate) fn limbs_sub_assign_mod(a: &mut [Limb], b: &[Limb], m: &[Limb]) {
+    debug_assert_eq!(a.len(), m.len());
+    debug_assert_eq!(b.len(), m.len());
+    prefixed_extern! {
+        // `r` and `a` may alias.
+        fn LIMBS_sub_mod(
+            r: *mut Limb,
+            a: *const Limb,
+            b: *const Limb,
+            m: *const Limb,
+            num_limbs: c::size_t,
+        );
+    }
+    unsafe { LIMBS_sub_mod(a.as_mut_ptr(), a.as_ptr(), b.as_ptr(), m.as_ptr(), m.len()) }
 }
 
 // r *= 2 (mod m).

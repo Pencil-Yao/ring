@@ -81,3 +81,13 @@ suite_b_curve!(
     p384_generate_private_key,
     p384_public_from_private
 );
+
+suite_b_curve!(
+    SM2P256,
+    256,
+    &ec::suite_b::ops::sm2p256::PRIVATE_KEY_OPS,
+    ec::CurveID::SM2P256,
+    sm2p256_check_private_key_bytes,
+    sm2p256_generate_private_key,
+    sm2p256_public_from_private
+);

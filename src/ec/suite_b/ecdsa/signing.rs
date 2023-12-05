@@ -17,6 +17,7 @@
 #![allow(clippy::cast_possible_truncation)] // XXX
 
 use super::digest_scalar::digest_scalar;
+use crate::signature::KeyPair;
 use crate::{
     arithmetic::montgomery::*,
     cpu, digest,
@@ -28,6 +29,7 @@ use crate::{
     io::der,
     limb, pkcs8, rand, sealed, signature,
 };
+
 /// An ECDSA signing algorithm.
 pub struct EcdsaSigningAlgorithm {
     curve: &'static ec::Curve,
@@ -43,8 +45,10 @@ pub struct EcdsaSigningAlgorithm {
 enum AlgorithmID {
     ECDSA_P256_SHA256_FIXED_SIGNING,
     ECDSA_P384_SHA384_FIXED_SIGNING,
+    ECDSA_SM2P256_SM3_FIXED_SIGNING,
     ECDSA_P256_SHA256_ASN1_SIGNING,
     ECDSA_P384_SHA384_ASN1_SIGNING,
+    ECDSA_SM2P256_SM3_ASN1_SIGNING,
 }
 
 derive_debug_via_id!(EcdsaSigningAlgorithm);
@@ -177,7 +181,22 @@ impl EcdsaKeyPair {
         message: &[u8],
     ) -> Result<signature::Signature, error::Unspecified> {
         // Step 4 (out of order).
-        let h = digest::digest(self.alg.digest_alg, message);
+        let h = {
+            if self.alg.id == AlgorithmID::ECDSA_SM2P256_SM3_ASN1_SIGNING
+                || self.alg.id == AlgorithmID::ECDSA_SM2P256_SM3_FIXED_SIGNING
+            {
+                let ctx = libsm::sm2::signature::SigCtx::new();
+                let pk_point = ctx
+                    .load_pubkey(self.public_key().0.as_ref())
+                    .map_err(|_| error::Unspecified)?;
+                let message = ctx
+                    .recid_combine("1234567812345678", &pk_point, message)
+                    .map_err(|_| error::Unspecified)?;
+                digest::digest(self.alg.digest_alg, &message)
+            } else {
+                digest::digest(self.alg.digest_alg, message)
+            }
+        };
 
         // Incorporate `h` into the nonce to hedge against faulty RNGs. (This
         // is not an approved random number generator that is mandated in
@@ -198,7 +217,22 @@ impl EcdsaKeyPair {
         message: &[u8],
     ) -> Result<signature::Signature, error::Unspecified> {
         // Step 4 (out of order).
-        let h = digest::digest(self.alg.digest_alg, message);
+        let h = {
+            if self.alg.id == AlgorithmID::ECDSA_SM2P256_SM3_ASN1_SIGNING
+                || self.alg.id == AlgorithmID::ECDSA_SM2P256_SM3_FIXED_SIGNING
+            {
+                let ctx = libsm::sm2::signature::SigCtx::new();
+                let pk_point = ctx
+                    .load_pubkey(self.public_key().0.as_ref())
+                    .map_err(|_| error::Unspecified)?;
+                let message = ctx
+                    .recid_combine("1234567812345678", &pk_point, message)
+                    .map_err(|_| error::Unspecified)?;
+                digest::digest(self.alg.digest_alg, &message)
+            } else {
+                digest::digest(self.alg.digest_alg, message)
+            }
+        };
 
         self.sign_digest(h, rng)
     }
@@ -243,13 +277,12 @@ impl EcdsaKeyPair {
             // XXX: iteration conut?
             // Step 1.
             let k = private_key::random_scalar(self.alg.private_key_ops, rng)?;
-            let k_inv = scalar_ops.scalar_inv_to_mont(&k);
 
             // Step 2.
             let r = private_key_ops.point_mul_base(&k);
 
             // Step 3.
-            let r = {
+            let mut r = {
                 let (x, _) = private_key::affine_from_jacobian(private_key_ops, &r)?;
                 let x = cops.elem_unencoded(&x);
                 elem_reduced_to_scalar(cops, &x)
@@ -264,13 +297,37 @@ impl EcdsaKeyPair {
             let e = digest_scalar(scalar_ops, h);
 
             // Step 6.
-            let s = {
-                let dr = scalar_ops.scalar_product(&self.d, &r);
-                let e_plus_dr = scalar_sum(cops, &e, dr);
-                scalar_ops.scalar_product(&k_inv, &e_plus_dr)
-            };
-            if cops.is_zero(&s) {
-                continue;
+            let mut s = Scalar::zero();
+            if self.alg.id == AlgorithmID::ECDSA_SM2P256_SM3_ASN1_SIGNING
+                || self.alg.id == AlgorithmID::ECDSA_SM2P256_SM3_FIXED_SIGNING
+            {
+                static SCALAR_ONE: Scalar<Unencoded> = Scalar::from_hex("1");
+
+                r = scalar_sum(cops, &r, e);
+
+                s = {
+                    let da_ue = scalar_ops.scalar_unencoded(&self.d);
+                    let left = scalar_ops.scalar_inv_to_mont(&scalar_sum(cops, &da_ue, SCALAR_ONE));
+
+                    let dr = scalar_ops.scalar_product(&self.d, &r);
+                    let right = scalar_sub(cops, k, &dr);
+
+                    scalar_ops.scalar_product(&left, &right)
+                };
+                if cops.is_zero(&s) {
+                    continue;
+                }
+            } else {
+                let k_inv = scalar_ops.scalar_inv_to_mont(&k);
+
+                s = {
+                    let dr = scalar_ops.scalar_product(&self.d, &r);
+                    let e_plus_dr = scalar_sum(cops, &e, dr);
+                    scalar_ops.scalar_product(&k_inv, &e_plus_dr)
+                };
+                if cops.is_zero(&s) {
+                    continue;
+                }
             }
 
             // Step 7 with encoding.
@@ -470,6 +527,17 @@ pub static ECDSA_P384_SHA384_FIXED_SIGNING: EcdsaSigningAlgorithm = EcdsaSigning
     id: AlgorithmID::ECDSA_P384_SHA384_FIXED_SIGNING,
 };
 
+/// sm2_with_sm3 signing algorithm asn.1
+pub static ECDSA_SM2P256_SM3_FIXED_SIGNING: EcdsaSigningAlgorithm = EcdsaSigningAlgorithm {
+    curve: &ec::suite_b::curve::SM2P256,
+    private_scalar_ops: &sm2p256::PRIVATE_SCALAR_OPS,
+    private_key_ops: &sm2p256::PRIVATE_KEY_OPS,
+    digest_alg: &digest::SM3_256,
+    pkcs8_template: &EC_PUBLIC_KEY_SM2P256_PKCS8_V1_TEMPLATE,
+    format_rs: format_rs_fixed,
+    id: AlgorithmID::ECDSA_SM2P256_SM3_FIXED_SIGNING,
+};
+
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and
 /// SHA-256.
 ///
@@ -500,6 +568,17 @@ pub static ECDSA_P384_SHA384_ASN1_SIGNING: EcdsaSigningAlgorithm = EcdsaSigningA
     id: AlgorithmID::ECDSA_P384_SHA384_ASN1_SIGNING,
 };
 
+/// sm2_with_sm3 signing algorithm asn.1
+pub static ECDSA_SM2P256_SM3_ASN1_SIGNING: EcdsaSigningAlgorithm = EcdsaSigningAlgorithm {
+    curve: &ec::suite_b::curve::SM2P256,
+    private_scalar_ops: &sm2p256::PRIVATE_SCALAR_OPS,
+    private_key_ops: &sm2p256::PRIVATE_KEY_OPS,
+    digest_alg: &digest::SM3_256,
+    pkcs8_template: &EC_PUBLIC_KEY_SM2P256_PKCS8_V1_TEMPLATE,
+    format_rs: format_rs_asn1,
+    id: AlgorithmID::ECDSA_SM2P256_SM3_ASN1_SIGNING,
+};
+
 static EC_PUBLIC_KEY_P256_PKCS8_V1_TEMPLATE: pkcs8::Template = pkcs8::Template {
     bytes: include_bytes!("ecPublicKey_p256_pkcs8_v1_template.der"),
     alg_id_range: core::ops::Range { start: 8, end: 27 },
@@ -512,6 +591,13 @@ static EC_PUBLIC_KEY_P384_PKCS8_V1_TEMPLATE: pkcs8::Template = pkcs8::Template {
     alg_id_range: core::ops::Range { start: 8, end: 24 },
     curve_id_index: 9,
     private_key_index: 0x23,
+};
+
+static EC_PUBLIC_KEY_SM2P256_PKCS8_V1_TEMPLATE: pkcs8::Template = pkcs8::Template {
+    bytes: include_bytes!("ecPublicKey_sm2p256_pkcs8_v1_template.der"),
+    alg_id_range: core::ops::Range { start: 8, end: 27 },
+    curve_id_index: 9,
+    private_key_index: 0x24,
 };
 
 #[cfg(test)]
@@ -581,6 +667,7 @@ mod tests {
                 let alg = match (curve_name.as_str(), digest_name.as_str()) {
                     ("P-256", "SHA256") => &signature::ECDSA_P256_SHA256_ASN1_SIGNING,
                     ("P-384", "SHA384") => &signature::ECDSA_P384_SHA384_ASN1_SIGNING,
+                    ("SM2-P-256", "SM3") => &signature::ECDSA_SM2P256_SM3_ASN1_SIGNING,
                     _ => {
                         panic!("Unsupported curve+digest: {}+{}", curve_name, digest_name);
                     }

@@ -76,6 +76,7 @@
     clippy::cast_sign_loss
 )]
 #![no_std]
+#![cfg_attr(feature = "internal_benches", allow(unstable_features), feature(test))]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;

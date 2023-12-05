@@ -262,6 +262,11 @@ impl ScalarOps {
     {
         mul_mont(self.scalar_mul_mont, a, b)
     }
+
+    #[inline]
+    pub fn scalar_unencoded(&self, a: &Scalar<R>) -> Scalar<Unencoded> {
+        self.scalar_product(a, &Scalar::from_hex("1"))
+    }
 }
 
 /// Operations on public scalars needed by ECDSA signature verification.
@@ -333,6 +338,15 @@ pub fn scalar_sum(ops: &CommonOps, a: &Scalar, mut b: Scalar) -> Scalar {
         &ops.n.limbs[..ops.num_limbs],
     );
     b
+}
+
+pub fn scalar_sub(ops: &CommonOps, mut a: Scalar, b: &Scalar) -> Scalar {
+    limbs_sub_assign_mod(
+        &mut a.limbs[..ops.num_limbs],
+        &b.limbs[..ops.num_limbs],
+        &ops.n.limbs[..ops.num_limbs],
+    );
+    a
 }
 
 // Returns (`a` squared `squarings` times) * `b`.
@@ -1154,5 +1168,11 @@ mod tests {
 }
 
 mod elem;
+pub mod norop;
+pub mod norop256;
+mod norop256_test;
 pub mod p256;
 pub mod p384;
+pub mod sm2p256;
+mod sm2p256_norop;
+mod sm2p256_table;

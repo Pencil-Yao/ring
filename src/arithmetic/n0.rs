@@ -16,7 +16,7 @@ use crate::limb::Limb;
 
 #[derive(Clone, Copy)]
 #[repr(transparent)]
-pub(in super::super) struct N0([Limb; 2]);
+pub struct N0(pub [Limb; 2]);
 
 impl N0 {
     #[cfg(feature = "alloc")]

@@ -37,7 +37,7 @@ pub struct EcdsaVerificationAlgorithm {
     id: AlgorithmID,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum AlgorithmID {
     ECDSA_P256_SHA256_ASN1,
     ECDSA_P256_SHA256_FIXED,
@@ -45,6 +45,8 @@ enum AlgorithmID {
     ECDSA_P384_SHA256_ASN1,
     ECDSA_P384_SHA384_ASN1,
     ECDSA_P384_SHA384_FIXED,
+    ECDSA_SM2P256_SM3_ASN1,
+    ECDSA_SM2P256_SM3_FIXED,
 }
 
 derive_debug_via_id!(EcdsaVerificationAlgorithm);
@@ -59,7 +61,22 @@ impl signature::VerificationAlgorithm for EcdsaVerificationAlgorithm {
         let e = {
             // NSA Guide Step 2: "Use the selected hash function to compute H =
             // Hash(M)."
-            let h = digest::digest(self.digest_alg, msg.as_slice_less_safe());
+            let h = {
+                if self.id == AlgorithmID::ECDSA_SM2P256_SM3_ASN1
+                    || self.id == AlgorithmID::ECDSA_SM2P256_SM3_FIXED
+                {
+                    let ctx = libsm::sm2::signature::SigCtx::new();
+                    let pk_point = ctx
+                        .load_pubkey(public_key.as_slice_less_safe())
+                        .map_err(|_| error::Unspecified)?;
+                    let message = ctx
+                        .recid_combine("1234567812345678", &pk_point, msg.as_slice_less_safe())
+                        .map_err(|_| error::Unspecified)?;
+                    digest::digest(self.digest_alg, &message)
+                } else {
+                    digest::digest(self.digest_alg, msg.as_slice_less_safe())
+                }
+            };
 
             // NSA Guide Step 3: "Convert the bit string H to an integer e as
             // described in Appendix B.2."
@@ -108,17 +125,30 @@ impl EcdsaVerificationAlgorithm {
 
         // NSA Guide Step 1: "If r and s are not both integers in the interval
         // [1, n − 1], output INVALID."
-        let r = scalar_parse_big_endian_variable(public_key_ops.common, limb::AllowZero::No, r)?;
+        let mut r =
+            scalar_parse_big_endian_variable(public_key_ops.common, limb::AllowZero::No, r)?;
         let s = scalar_parse_big_endian_variable(public_key_ops.common, limb::AllowZero::No, s)?;
 
-        // NSA Guide Step 4: "Compute w = s**−1 mod n, using the routine in
-        // Appendix B.1."
-        let w = scalar_ops.scalar_inv_to_mont(&s);
+        let mut u1 = Scalar::zero();
+        let mut u2 = Scalar::zero();
 
-        // NSA Guide Step 5: "Compute u1 = (e * w) mod n, and compute
-        // u2 = (r * w) mod n."
-        let u1 = scalar_ops.scalar_product(&e, &w);
-        let u2 = scalar_ops.scalar_product(&r, &w);
+        if self.id == AlgorithmID::ECDSA_SM2P256_SM3_ASN1
+            || self.id == AlgorithmID::ECDSA_SM2P256_SM3_FIXED
+        {
+            u1 = s;
+
+            u2 = scalar_sum(scalar_ops.common, &r, s);
+            r = scalar_sub(scalar_ops.common, r, &e);
+        } else {
+            // NSA Guide Step 4: "Compute w = s**−1 mod n, using the routine in
+            // Appendix B.1."
+            let w = scalar_ops.scalar_inv_to_mont(&s);
+
+            // NSA Guide Step 5: "Compute u1 = (e * w) mod n, and compute
+            // u2 = (r * w) mod n."
+            u1 = scalar_ops.scalar_product(&e, &w);
+            u2 = scalar_ops.scalar_product(&r, &w);
+        }
 
         // NSA Guide Step 6: "Compute the elliptic curve point
         // R = (xR, yR) = u1*G + u2*Q, using EC scalar multiplication and EC
@@ -273,6 +303,22 @@ pub static ECDSA_P384_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificatio
     digest_alg: &digest::SHA384,
     split_rs: split_rs_asn1,
     id: AlgorithmID::ECDSA_P384_SHA384_ASN1,
+};
+
+/// verify sm2 sig asn1
+pub static ECDSA_SM2P256_SM3_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+    ops: &sm2p256::PUBLIC_SCALAR_OPS,
+    digest_alg: &digest::SM3_256,
+    split_rs: split_rs_asn1,
+    id: AlgorithmID::ECDSA_SM2P256_SM3_ASN1,
+};
+
+/// verify sm2 sig fixed
+pub static ECDSA_SM2P256_SM3_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+    ops: &sm2p256::PUBLIC_SCALAR_OPS,
+    digest_alg: &digest::SM3_256,
+    split_rs: split_rs_fixed,
+    id: AlgorithmID::ECDSA_SM2P256_SM3_FIXED,
 };
 
 #[cfg(test)]
