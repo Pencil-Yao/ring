@@ -129,6 +129,9 @@ pub static HMAC_SHA1_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm(&digest::SHA1_FO
 /// HMAC using SHA-256.
 pub static HMAC_SHA256: Algorithm = Algorithm(&digest::SHA256);
 
+/// HMAC using SM3-256.
+pub static HMAC_SM3_256: Algorithm = Algorithm(&digest::SM3_256);
+
 /// HMAC using SHA-384.
 pub static HMAC_SHA384: Algorithm = Algorithm(&digest::SHA384);
 
