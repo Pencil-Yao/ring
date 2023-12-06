@@ -39,6 +39,9 @@ pub static HKDF_SHA1_FOR_LEGACY_USE_ONLY: Algorithm =
 /// HKDF using HMAC-SHA-256.
 pub static HKDF_SHA256: Algorithm = Algorithm(hmac::HMAC_SHA256);
 
+/// HKDF using HMAC-SM3-256.
+pub static HKDF_SM3_256: Algorithm = Algorithm(hmac::HMAC_SM3_256);
+
 /// HKDF using HMAC-SHA-384.
 pub static HKDF_SHA384: Algorithm = Algorithm(hmac::HMAC_SHA384);
 
