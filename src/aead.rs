@@ -31,6 +31,7 @@ pub use self::{
     nonce::{Nonce, NONCE_LEN},
     opening_key::OpeningKey,
     sealing_key::SealingKey,
+    sm4::SM4_CFB,
     unbound_key::UnboundKey,
 };
 
