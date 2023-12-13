@@ -64,7 +64,7 @@ use crate::{cpu, debug, ec, error, rand};
 
 pub use crate::ec::{
     curve25519::x25519::X25519,
-    suite_b::ecdh::{ECDH_P256, ECDH_P384},
+    suite_b::ecdh::{ECDH_P256, ECDH_P384, ECDH_SM2P256},
 };
 
 /// A key agreement algorithm.

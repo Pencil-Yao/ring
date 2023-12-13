@@ -23,6 +23,7 @@ static ALGORITHMS: &[(&str, &agreement::Algorithm)] = &[
     ("p256", &agreement::ECDH_P256),
     ("p384", &&agreement::ECDH_P384),
     ("x25519", &&agreement::X25519),
+    ("sm2p256", &&agreement::ECDH_SM2P256),
 ];
 
 fn generate_key(c: &mut Criterion) {

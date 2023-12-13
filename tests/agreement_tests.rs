@@ -206,6 +206,8 @@ fn alg_from_curve_name(curve_name: &str) -> &'static agreement::Algorithm {
         &agreement::ECDH_P384
     } else if curve_name == "X25519" {
         &agreement::X25519
+    } else if curve_name == "SM2-P-256" {
+        &agreement::ECDH_SM2P256
     } else {
         panic!("Unsupported curve: {}", curve_name);
     }
