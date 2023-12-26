@@ -173,7 +173,7 @@ name = "ring"
 [dependencies]
 getrandom = { version = "0.2.10" }
 untrusted = { version = "0.9" }
-libsm = { version = "0.5" }
+libsm = { version = "0.6" }
 num-bigint = { version ="0.4" }
 num-traits = { version ="0.2.11" }
 lazy_static = { version = "1.4" }

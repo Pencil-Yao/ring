@@ -31,7 +31,7 @@ pub use self::{
     nonce::{Nonce, NONCE_LEN},
     opening_key::OpeningKey,
     sealing_key::SealingKey,
-    sm4::SM4_CFB,
+    sm4::SM4_GCM,
     unbound_key::UnboundKey,
 };
 
@@ -122,7 +122,7 @@ impl<A> Eq for Aad<A> where A: Eq {}
 enum KeyInner {
     AesGcm(aes_gcm::Key),
     ChaCha20Poly1305(chacha20_poly1305::Key),
-    SM4CFB(sm4::Key),
+    SM4GCM(sm4::Key),
 }
 
 impl hkdf::KeyType for &'static Algorithm {
@@ -189,7 +189,7 @@ enum AlgorithmID {
     AES_128_GCM,
     AES_256_GCM,
     CHACHA20_POLY1305,
-    SM4_CFB,
+    SM4_GCM,
 }
 
 impl PartialEq for Algorithm {

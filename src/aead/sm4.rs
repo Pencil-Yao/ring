@@ -1,5 +1,4 @@
 use crate::aead::block::Block;
-use crate::aead::quic::Sample;
 use crate::aead::{Aad, KeyInner, Nonce, Tag};
 use crate::endian::BigEndian;
 use crate::polyfill::ArraySplitMap;
@@ -9,13 +8,13 @@ use libsm::sm4::cipher_mode::{CipherMode, Sm4CipherMode};
 
 const KEY_LEN: usize = 16;
 
-/// SM4 with cfb mod
-pub static SM4_CFB: aead::Algorithm = aead::Algorithm {
+/// SM4 with gcm mod
+pub static SM4_GCM: aead::Algorithm = aead::Algorithm {
     key_len: 16,
     init: init_key,
-    seal: sm4_cfb_seal,
-    open: sm4_cfb_open,
-    id: aead::AlgorithmID::SM4_CFB,
+    seal: sm4_gcm_seal,
+    open: sm4_gcm_open,
+    id: aead::AlgorithmID::SM4_GCM,
     max_input_len: super::max_input_len(16, 2),
 };
 
@@ -35,14 +34,14 @@ impl Key {
 }
 
 fn init_key(key: &[u8], _cpu_features: cpu::Features) -> Result<KeyInner, error::Unspecified> {
-    Ok(KeyInner::SM4CFB(Key::from(key)))
+    Ok(KeyInner::SM4GCM(Key::from(key)))
 }
 
-fn sm4_cfb_seal(key: &KeyInner, nonce: Nonce, aad: Aad<&[u8]>, in_out: &mut [u8]) -> Tag {
+fn sm4_gcm_seal(key: &KeyInner, nonce: Nonce, aad: Aad<&[u8]>, in_out: &mut [u8]) -> Tag {
     exec(key, nonce, aad, in_out, Direction::Sealing)
 }
 
-fn sm4_cfb_open(
+fn sm4_gcm_open(
     key: &KeyInner,
     nonce: Nonce,
     aad: Aad<&[u8]>,
@@ -64,18 +63,18 @@ fn sm4_cfb_open(
 fn exec(
     key: &KeyInner,
     nonce: Nonce,
-    Aad(_aad): Aad<&[u8]>,
+    Aad(aad): Aad<&[u8]>,
     in_out: &mut [u8],
     direction: Direction,
 ) -> Tag {
     let sm4_key = match key {
-        KeyInner::SM4CFB(key) => key,
+        KeyInner::SM4GCM(key) => key,
         _ => unreachable!(),
     };
 
     let mut counter = Counter::one(nonce);
     let tag_iv = counter.increment();
-    let sm4cm = Sm4CipherMode::new(sm4_key.value(), CipherMode::Cfb).unwrap();
+    let sm4cm = Sm4CipherMode::new(sm4_key.value(), CipherMode::Gcm).unwrap();
     let in_data = in_out.to_vec();
 
     match direction {
@@ -83,6 +82,7 @@ fn exec(
             in_out[in_prefix_len..].copy_from_slice(
                 sm4cm
                     .decrypt(
+                        &aad,
                         &in_data,
                         counter.increment().into_block_less_safe().as_ref(),
                     )
@@ -93,6 +93,7 @@ fn exec(
         Direction::Sealing => in_out.copy_from_slice(
             sm4cm
                 .encrypt(
+                    &aad,
                     &in_data,
                     counter.increment().into_block_less_safe().as_ref(),
                 )
