@@ -177,7 +177,7 @@ fn open_within_<'in_out>(
         combine.extend_from_slice(&in_out);
         combine.extend_from_slice(&received_tag.0);
         let tag = (key.algorithm.open)(&key.inner, nonce, aad, &mut combine, src);
-        in_out.copy_from_slice(&combine);
+        in_out.copy_from_slice(&combine[..in_out.len()]);
         tag
     } else {
         (key.algorithm.open)(&key.inner, nonce, aad, in_out, src)
