@@ -12,8 +12,9 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use super::{Aad, Algorithm, KeyInner, Nonce, Tag, UnboundKey, TAG_LEN};
+use super::{Aad, Algorithm, AlgorithmID, KeyInner, Nonce, Tag, UnboundKey, TAG_LEN};
 use crate::{constant_time, cpu, error, polyfill};
+use alloc::vec::Vec;
 use core::ops::RangeFrom;
 
 /// Immutable keys for use in situations where `OpeningKey`/`SealingKey` and
@@ -171,7 +172,16 @@ fn open_within_<'in_out>(
     let ciphertext_len = in_out.get(src.clone()).ok_or(error::Unspecified)?.len();
     check_per_nonce_max_bytes(key.algorithm, ciphertext_len)?;
 
-    let Tag(calculated_tag) = (key.algorithm.open)(&key.inner, nonce, aad, in_out, src);
+    let Tag(calculated_tag) = if key.algorithm.id == AlgorithmID::SM4_GCM {
+        let mut combine = Vec::new();
+        combine.extend_from_slice(&in_out);
+        combine.extend_from_slice(&received_tag.0);
+        let tag = (key.algorithm.open)(&key.inner, nonce, aad, &mut combine, src);
+        in_out.copy_from_slice(&combine);
+        tag
+    } else {
+        (key.algorithm.open)(&key.inner, nonce, aad, in_out, src)
+    };
 
     if constant_time::verify_slices_are_equal(calculated_tag.as_ref(), received_tag.as_ref())
         .is_err()

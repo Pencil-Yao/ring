@@ -73,36 +73,36 @@ fn exec(
     };
 
     let mut counter = Counter::one(nonce);
-    let tag_iv = counter.increment();
     let sm4cm = Sm4CipherMode::new(sm4_key.value(), CipherMode::Gcm).unwrap();
     let in_data = in_out.to_vec();
 
+    let mut tag = [0; 16];
     match direction {
         Direction::Opening { in_prefix_len } => {
-            in_out[in_prefix_len..].copy_from_slice(
-                sm4cm
-                    .decrypt(
-                        &aad,
-                        &in_data,
-                        counter.increment().into_block_less_safe().as_ref(),
-                    )
-                    .unwrap()
-                    .as_slice(),
-            );
+            tag.copy_from_slice(&in_out[in_out.len() - 16..]);
+            let out = sm4cm
+                .decrypt(
+                    &aad,
+                    &in_data,
+                    counter.increment().into_block_less_safe().as_ref(),
+                )
+                .unwrap();
+            in_out[..out.len() - in_prefix_len].copy_from_slice(&out[in_prefix_len..]);
+            Tag(tag)
         }
-        Direction::Sealing => in_out.copy_from_slice(
-            sm4cm
+        Direction::Sealing => {
+            let out = sm4cm
                 .encrypt(
                     &aad,
                     &in_data,
                     counter.increment().into_block_less_safe().as_ref(),
                 )
-                .unwrap()
-                .as_slice(),
-        ),
+                .unwrap();
+            in_out.copy_from_slice(&out[..out.len() - 16]);
+            tag.copy_from_slice(&out[out.len() - 16..]);
+            Tag(tag)
+        }
     }
-    let block = tag_iv.into_block_less_safe();
-    Tag(*block.as_ref())
 }
 
 #[derive(Clone, Copy)]
