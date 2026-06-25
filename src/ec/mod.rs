@@ -45,6 +45,7 @@ pub enum CurveID {
     Curve25519,
     P256,
     P384,
+    SM2P256,
 }
 
 const ELEM_MAX_BITS: usize = 384;

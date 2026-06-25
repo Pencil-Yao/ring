@@ -30,6 +30,11 @@ static ALGORITHMS: &[(&str, &EcdsaSigningAlgorithm, &EcdsaVerificationAlgorithm)
         &signature::ECDSA_P384_SHA384_ASN1_SIGNING,
         &signature::ECDSA_P384_SHA384_ASN1,
     ),
+    (
+        "sm2p256",
+        &signature::ECDSA_SM2P256_SM3_ASN1_SIGNING,
+        &signature::ECDSA_SM2P256_SM3_ASN1,
+    ),
 ];
 
 fn sign(c: &mut Criterion) {

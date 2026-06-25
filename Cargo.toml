@@ -125,6 +125,7 @@ include = [
     "src/ec/curve25519/ed25519/ed25519_pkcs8_v2_template.der",
     "src/ec/suite_b/ecdsa/ecPublicKey_p256_pkcs8_v1_template.der",
     "src/ec/suite_b/ecdsa/ecPublicKey_p384_pkcs8_v1_template.der",
+    "src/ec/suite_b/ecdsa/ecPublicKey_sm2p256_pkcs8_v1_template.der",
     "src/rsa/signature_rsa_example_private_key.der",
     "src/rsa/signature_rsa_example_public_key.der",
     "tests/**/*.rs",
@@ -159,6 +160,12 @@ name = "ring"
 
 [dependencies]
 cfg-if = { version = "1.0.0", default-features = false }
+libsm = { version = "0.6" }
+efficient-sm2 ={ version = "0.2" }
+num-bigint = { version ="0.4" }
+num-traits = { version ="0.2.11" }
+lazy_static = { version = "1.4" }
+hex = { version = "0.4" }
 
 # `CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback cargo update -p getrandom`.
 # On wasm32-wasip3, this depends on a version of wasip3 that has a higher MSRV;
@@ -198,6 +205,7 @@ unstable-testing-arm-no-hw = []
 unstable-testing-arm-no-neon = []
 test_logging = []
 wasm32_unknown_unknown_js = ["getrandom/wasm_js"]
+internal_benches = []
 
 [package.metadata.cargo-semver-checks.lints]
 trait_marked_deprecated = { level = "warn" }

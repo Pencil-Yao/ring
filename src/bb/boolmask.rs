@@ -17,7 +17,7 @@ use core::{hint, ops};
 
 // BoolMask is either `BoolMask::TRUE` or `BoolMask::FALSE`.
 #[repr(transparent)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub struct BoolMask(Word);
 
 impl BoolMask {

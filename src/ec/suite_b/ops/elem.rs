@@ -14,6 +14,7 @@
 
 use crate::ec::suite_b::ops::{
     p256::NUM_LIMBS as P256_NUM_LIMBS, p384::NUM_LIMBS as P384_NUM_LIMBS,
+    sm2p256::NUM_LIMBS as SM2P256_NUM_LIMBS,
 };
 use crate::{
     arithmetic::{
@@ -28,6 +29,7 @@ use core::marker::PhantomData;
 pub(super) enum NumLimbs {
     P256,
     P384,
+    SM2P256,
 }
 
 impl NumLimbs {
@@ -37,6 +39,7 @@ impl NumLimbs {
         match self {
             NumLimbs::P256 => P256_NUM_LIMBS,
             NumLimbs::P384 => P384_NUM_LIMBS,
+            NumLimbs::SM2P256 => SM2P256_NUM_LIMBS,
         }
     }
 }

@@ -27,7 +27,7 @@ mod limbs;
 mod limbs512;
 pub mod montgomery;
 
-mod n0;
+pub mod n0;
 
 // The minimum number of limbs allowed for any `&[Limb]` operation.
 //

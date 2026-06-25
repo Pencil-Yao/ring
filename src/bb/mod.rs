@@ -26,6 +26,7 @@ pub(crate) use self::{
         xor_assign, xor_assign_at_start_bytes,
     },
     leaky::LeakyWord,
+    leaky::DoubleWord,
     word::{Word, WordOps},
 };
 

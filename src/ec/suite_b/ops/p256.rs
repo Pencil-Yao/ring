@@ -333,3 +333,21 @@ mod tests {
         );
     }
 }
+
+#[cfg(feature = "internal_benches")]
+mod internal_benches {
+    extern crate test;
+    use super::*;
+
+    #[bench]
+    fn p256_mul_mont_bench(bench: &mut test::Bencher) {
+        let mut r: [Limb; 4] = [0, 0, 0, 0];
+        let a: &[Limb] = &[
+            0xfffff8950000053b,
+            0xfffffdc600000543,
+            0xfffffb8c00000324,
+            0xfffffc4d0000064e,
+        ];
+        bench.iter(|| unsafe { p256_mul_mont(r.as_mut_ptr(), a.as_ptr(), a.as_ptr()) });
+    }
+}

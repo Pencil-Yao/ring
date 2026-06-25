@@ -20,6 +20,7 @@ static ALGORITHMS: &[(&str, &digest::Algorithm)] = &[
     ("sha256", &digest::SHA256),
     ("sha384", &digest::SHA384),
     ("sha512", &digest::SHA512),
+    ("sm3", &digest::SM3_256),
 ];
 
 const INPUT_LENGTHS: &[usize] = &[

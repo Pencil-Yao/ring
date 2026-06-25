@@ -266,13 +266,14 @@ pub use crate::ec::{
     suite_b::ecdsa::{
         signing::{
             ECDSA_P256_SHA256_ASN1_SIGNING, ECDSA_P256_SHA256_FIXED_SIGNING,
-            ECDSA_P384_SHA384_ASN1_SIGNING, ECDSA_P384_SHA384_FIXED_SIGNING, EcdsaKeyPair,
+            ECDSA_P384_SHA384_ASN1_SIGNING, ECDSA_P384_SHA384_FIXED_SIGNING,
+            ECDSA_SM2P256_SM3_ASN1_SIGNING, ECDSA_SM2P256_SM3_FIXED_SIGNING, EcdsaKeyPair,
             EcdsaSigningAlgorithm,
         },
         verification::{
             ECDSA_P256_SHA256_ASN1, ECDSA_P256_SHA256_FIXED, ECDSA_P256_SHA384_ASN1,
             ECDSA_P384_SHA256_ASN1, ECDSA_P384_SHA384_ASN1, ECDSA_P384_SHA384_FIXED,
-            EcdsaVerificationAlgorithm,
+            ECDSA_SM2P256_SM3_ASN1, ECDSA_SM2P256_SM3_FIXED, EcdsaVerificationAlgorithm,
         },
     },
 };

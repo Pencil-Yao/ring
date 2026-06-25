@@ -18,9 +18,7 @@ use super::{
     overlapping::{IndexError, Overlapping},
 };
 use crate::{
-    cpu,
-    error::{self, InputTooLongError},
-    hkdf,
+    aead::sm4, cpu, error::{self, InputTooLongError}, hkdf
 };
 use core::ops::RangeFrom;
 
@@ -119,6 +117,7 @@ pub(super) enum AlgorithmID {
     AES_128_GCM,
     AES_256_GCM,
     CHACHA20_POLY1305,
+    SM4_GCM,
 }
 
 impl PartialEq for Algorithm {
@@ -255,3 +254,12 @@ fn chacha20_poly1305_open<'o>(
         cpu_features,
     )
 }
+
+/// SM4 with gcm mod
+pub static SM4_GCM: Algorithm = Algorithm {
+    key_len: 16,
+    init: sm4::init_key,
+    seal: sm4::sm4_gcm_seal,
+    open: sm4::sm4_gcm_open,
+    id: AlgorithmID::SM4_GCM,
+};

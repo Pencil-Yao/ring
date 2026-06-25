@@ -15,9 +15,11 @@
 match_target_word_bits! {
     64 => {
         type CompilerWord = u64;
+        type CompilerDouWord = u128;
     },
     32 => {
         type CompilerWord = u32;
+        type CompilerDouWord = u64;
     },
 }
 
@@ -28,3 +30,5 @@ match_target_word_bits! {
 /// XXX: This isn't the native word size on targets where a pointer isn't the
 /// same size as a native word. TODO: Fix this.
 pub(crate) type LeakyWord = CompilerWord;
+
+pub(crate) type DoubleWord = CompilerDouWord;

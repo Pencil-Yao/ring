@@ -29,7 +29,7 @@ use crate::{
 };
 
 pub use self::{
-    algorithm::{AES_128_GCM, AES_256_GCM, Algorithm, CHACHA20_POLY1305},
+    algorithm::{AES_128_GCM, AES_256_GCM, Algorithm, CHACHA20_POLY1305, SM4_GCM},
     less_safe_key::LessSafeKey,
     nonce::{NONCE_LEN, Nonce},
     opening_key::OpeningKey,
@@ -124,6 +124,7 @@ impl<A> Eq for Aad<A> where A: Eq {}
 enum KeyInner {
     AesGcm(aes_gcm::Key),
     ChaCha20Poly1305(chacha20_poly1305::Key),
+    SM4GCM(sm4::Key),
 }
 
 const fn max_input_len(block_len: usize, overhead_blocks_per_nonce: usize) -> usize {
@@ -222,6 +223,7 @@ mod overlapping;
 mod poly1305;
 pub mod quic;
 mod sealing_key;
+mod sm4;
 mod unbound_key;
 
 #[cfg(test)]

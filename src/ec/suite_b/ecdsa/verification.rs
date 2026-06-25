@@ -45,6 +45,8 @@ enum AlgorithmID {
     ECDSA_P384_SHA256_ASN1,
     ECDSA_P384_SHA384_ASN1,
     ECDSA_P384_SHA384_FIXED,
+    ECDSA_SM2P256_SM3_ASN1,
+    ECDSA_SM2P256_SM3_FIXED,
 }
 
 derive_debug_via_id!(EcdsaVerificationAlgorithm);
@@ -269,6 +271,22 @@ pub static ECDSA_P384_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificatio
     digest_alg: &digest::SHA384,
     split_rs: split_rs_asn1,
     id: AlgorithmID::ECDSA_P384_SHA384_ASN1,
+};
+
+/// verify sm2 sig asn1
+pub static ECDSA_SM2P256_SM3_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+    ops: &sm2p256::PUBLIC_SCALAR_OPS,
+    digest_alg: &digest::SM3_256,
+    split_rs: split_rs_asn1,
+    id: AlgorithmID::ECDSA_SM2P256_SM3_ASN1,
+};
+
+/// verify sm2 sig fixed
+pub static ECDSA_SM2P256_SM3_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+    ops: &sm2p256::PUBLIC_SCALAR_OPS,
+    digest_alg: &digest::SM3_256,
+    split_rs: split_rs_fixed,
+    id: AlgorithmID::ECDSA_SM2P256_SM3_FIXED,
 };
 
 #[cfg(test)]

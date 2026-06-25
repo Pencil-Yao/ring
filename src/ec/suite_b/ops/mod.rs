@@ -140,6 +140,17 @@ impl<M> Modulus<M> {
         )
         .unwrap_or_else(unwrap_impossible_len_mismatch_error)
     }
+
+    #[inline]
+    pub fn sub_assign<E: Encoding>(&self, a: &mut elem::Elem<M, E>, b: &elem::Elem<M, E>) {
+        let num_limbs = self.num_limbs.into();
+        limbs_sub_assign_mod(
+            &mut a.limbs[..num_limbs],
+            &b.limbs[..num_limbs],
+            &self.limbs[..num_limbs],
+        )
+        .unwrap_or_else(unwrap_impossible_len_mismatch_error)
+    }
 }
 
 impl Modulus<Q> {
@@ -1391,5 +1402,11 @@ mod tests {
 }
 
 mod elem;
+mod norop;
+mod norop256;
+mod norop256_test;
 pub mod p256;
 pub mod p384;
+pub mod sm2p256;
+mod sm2p256_norop;
+mod sm2p256_table;

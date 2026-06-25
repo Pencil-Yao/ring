@@ -36,6 +36,7 @@ use core::ops::RangeInclusive;
 // XXX: Not correct for x32 ABIs.
 pub type Limb = bb::Word;
 pub type LeakyLimb = bb::LeakyWord;
+pub type DoubleLimb = bb::DoubleWord;
 pub const LIMB_BITS: usize = usize_from_u32(Limb::BITS);
 pub const LIMB_BYTES: usize = LIMB_BITS.div_ceil(8);
 
@@ -306,6 +307,31 @@ pub(crate) fn limbs_add_assign_mod(
         let m = m.as_ptr(); // Also non-dangling because `num_limbs` is non-zero.
         unsafe {
             LIMBS_add_mod(r.start_mut_ptr(), a, b, m, num_limbs);
+        }
+    })
+}
+
+#[inline]
+pub(crate) fn limbs_sub_assign_mod(
+    a: &mut [Limb],
+    b: &[Limb],
+    m: &[Limb],
+) -> Result<(), LenMismatchError> {
+    prefixed_extern! {
+        // `r` and `a` may alias.
+        unsafe fn LIMBS_sub_mod(
+            r: *mut Limb,
+            a: *const Limb,
+            b: *const Limb,
+            m: *const Limb,
+            num_limbs: NonZero<c::size_t>,
+        );
+    }
+    let num_limbs = NonZero::new(m.len()).ok_or_else(|| LenMismatchError::new(m.len()))?;
+    (InOut(a), b).with_non_dangling_non_null_pointers(num_limbs, |mut r, [a, b]| {
+        let m = m.as_ptr(); // Also non-dangling because `num_limbs` is non-zero.
+        unsafe {
+            LIMBS_sub_mod(r.start_mut_ptr(), a, b, m, num_limbs);
         }
     })
 }
