@@ -301,6 +301,10 @@ fn signature_ecdsa_sign_asn1_test() {
                     &signature::ECDSA_P384_SHA384_ASN1_SIGNING,
                     &signature::ECDSA_P384_SHA384_ASN1,
                 ),
+                ("SM2-P-256", "SM3") => (
+                    &signature::ECDSA_SM2P256_SM3_ASN1_SIGNING,
+                    &signature::ECDSA_SM2P256_SM3_ASN1,
+                ),
                 _ => {
                     panic!("Unsupported curve+digest: {curve_name}+{digest_name}");
                 }

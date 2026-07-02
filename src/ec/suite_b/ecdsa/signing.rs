@@ -214,7 +214,22 @@ impl EcdsaKeyPair {
         message: &[u8],
     ) -> Result<signature::Signature, error::Unspecified> {
         // Step 4 (out of order).
-        let h = digest::digest(self.alg.digest_alg, message);
+        let h = {
+            if self.alg.id == AlgorithmID::ECDSA_SM2P256_SM3_ASN1_SIGNING
+                || self.alg.id == AlgorithmID::ECDSA_SM2P256_SM3_FIXED_SIGNING
+            {
+                let ctx = libsm::sm2::signature::SigCtx::new();
+                let pk_point = ctx
+                    .load_pubkey(self.public_key.0.as_ref())
+                    .map_err(|_| error::Unspecified)?;
+                let message = ctx
+                    .recid_combine("1234567812345678", &pk_point, message)
+                    .map_err(|_| error::Unspecified)?;
+                digest::digest(self.alg.digest_alg, &message)
+            } else {
+                digest::digest(self.alg.digest_alg, message)
+            }
+        };
 
         self.sign_digest(&h, rng, cpu::features())
     }
@@ -287,7 +302,6 @@ impl EcdsaKeyPair {
             {
                 let SCALAR_ONE = Scalar::one();
 
-                // r = scalar_sum(cops, &r, e);
                 n.add_assign(&mut r, &e);
 
                 {
@@ -658,6 +672,7 @@ mod tests {
                 let alg = match (curve_name.as_str(), digest_name.as_str()) {
                     ("P-256", "SHA256") => &signature::ECDSA_P256_SHA256_ASN1_SIGNING,
                     ("P-384", "SHA384") => &signature::ECDSA_P384_SHA384_ASN1_SIGNING,
+                    ("SM2-P-256", "SM3") => &signature::ECDSA_SM2P256_SM3_ASN1_SIGNING,
                     _ => {
                         panic!("Unsupported curve+digest: {}+{}", curve_name, digest_name);
                     }

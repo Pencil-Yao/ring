@@ -37,7 +37,7 @@ pub struct EcdsaVerificationAlgorithm {
     id: AlgorithmID,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum AlgorithmID {
     ECDSA_P256_SHA256_ASN1,
     ECDSA_P256_SHA256_FIXED,
@@ -63,7 +63,22 @@ impl signature::VerificationAlgorithm for EcdsaVerificationAlgorithm {
         let e = {
             // NSA Guide Step 2: "Use the selected hash function to compute H =
             // Hash(M)."
-            let h = digest::digest(self.digest_alg, msg.as_slice_less_safe());
+            let h = {
+                if self.id == AlgorithmID::ECDSA_SM2P256_SM3_ASN1
+                    || self.id == AlgorithmID::ECDSA_SM2P256_SM3_FIXED
+                {
+                    let ctx = libsm::sm2::signature::SigCtx::new();
+                    let pk_point = ctx
+                        .load_pubkey(public_key.as_slice_less_safe())
+                        .map_err(|_| error::Unspecified)?;
+                    let message = ctx
+                        .recid_combine("1234567812345678", &pk_point, msg.as_slice_less_safe())
+                        .map_err(|_| error::Unspecified)?;
+                    digest::digest(self.digest_alg, &message)
+                } else {
+                    digest::digest(self.digest_alg, msg.as_slice_less_safe())
+                }
+            };
 
             // NSA Guide Step 3: "Convert the bit string H to an integer e as
             // described in Appendix B.2."
@@ -116,18 +131,30 @@ impl EcdsaVerificationAlgorithm {
 
         // NSA Guide Step 1: "If r and s are not both integers in the interval
         // [1, n − 1], output INVALID."
-        let r = scalar_parse_big_endian_variable(n, limb::AllowZero::No, r)?;
+        let mut r = scalar_parse_big_endian_variable(n, limb::AllowZero::No, r)?;
         let s = scalar_parse_big_endian_variable(n, limb::AllowZero::No, s)?;
 
-        // NSA Guide Step 4: "Compute w = s**−1 mod n, using the routine in
-        // Appendix B.1."
-        let w = self.ops.scalar_inv_to_mont_vartime(&s, cpu);
+        let (u1, u2) = if self.id == AlgorithmID::ECDSA_SM2P256_SM3_ASN1
+            || self.id == AlgorithmID::ECDSA_SM2P256_SM3_FIXED
+        {
+            let u1 = s;
+            let mut u2 = r;
 
-        // NSA Guide Step 5: "Compute u1 = (e * w) mod n, and compute
-        // u2 = (r * w) mod n."
-        let u1 = scalar_ops.scalar_product(&e, &w, cpu);
-        let u2 = scalar_ops.scalar_product(&r, &w, cpu);
+            n.add_assign(&mut u2, &s);
+            n.sub_assign(&mut r, &e);
+            (u1, u2)
+        } else {
+            // NSA Guide Step 4: "Compute w = s**−1 mod n, using the routine in
+            // Appendix B.1."
+            let w = self.ops.scalar_inv_to_mont_vartime(&s, cpu);
 
+            // NSA Guide Step 5: "Compute u1 = (e * w) mod n, and compute
+            // u2 = (r * w) mod n."
+            (
+                scalar_ops.scalar_product(&e, &w, cpu),
+                scalar_ops.scalar_product(&r, &w, cpu),
+            )
+        };
         // NSA Guide Step 6: "Compute the elliptic curve point
         // R = (xR, yR) = u1*G + u2*Q, using EC scalar multiplication and EC
         // addition. If R is equal to the point at infinity, output INVALID."

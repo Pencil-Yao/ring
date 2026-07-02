@@ -776,12 +776,11 @@ mod sm2p256_norop_test {
         norop_to_mont_sm2p256(mont_ori_point_g_y.as_mut_ptr(), ori_point_g_y.as_ptr());
         let projective_mont_point_g =
             norop_to_jacobi_sm2p256([mont_ori_point_g_x.as_ptr(), mont_ori_point_g_y.as_ptr()]);
-        let lam: [Limb; 4] = [0, 0, 0, 0];
-        let double_projective_mont_point_g: [*mut Limb; 3] = [
-            lam.clone().as_mut_ptr(),
-            lam.clone().as_mut_ptr(),
-            lam.clone().as_mut_ptr(),
-        ];
+        let mut lam0: [Limb; 4] = [0, 0, 0, 0];
+        let mut lam1: [Limb; 4] = [0, 0, 0, 0];
+        let mut lam2: [Limb; 4] = [0, 0, 0, 0];
+        let double_projective_mont_point_g: [*mut Limb; 3] =
+            [lam0.as_mut_ptr(), lam1.as_mut_ptr(), lam2.as_mut_ptr()];
         norop_point_double_sm2p256(double_projective_mont_point_g, projective_mont_point_g);
         unsafe {
             let r_x: &mut [Limb] = &mut [0, 0, 0, 0];
@@ -839,12 +838,10 @@ mod sm2p256_norop_test {
         ];
         let pro_g_2 = norop_to_jacobi_sm2p256([g_2_x.as_ptr(), g_2_y.as_ptr()]);
         let pro_g_4 = norop_to_jacobi_sm2p256([g_4_x.as_ptr(), g_4_y.as_ptr()]);
-        let lam: [Limb; 4] = [0, 0, 0, 0];
-        let pro_g_6: [*mut Limb; 3] = [
-            lam.clone().as_mut_ptr(),
-            lam.clone().as_mut_ptr(),
-            lam.clone().as_mut_ptr(),
-        ];
+        let mut lam0: [Limb; 4] = [0, 0, 0, 0];
+        let mut lam1: [Limb; 4] = [0, 0, 0, 0];
+        let mut lam2: [Limb; 4] = [0, 0, 0, 0];
+        let pro_g_6: [*mut Limb; 3] = [lam0.as_mut_ptr(), lam1.as_mut_ptr(), lam2.as_mut_ptr()];
         norop_point_add_sm2p256(pro_g_6, pro_g_2, pro_g_4);
         unsafe {
             let r_x: &mut [Limb] = &mut [0, 0, 0, 0];
@@ -895,12 +892,10 @@ mod sm2p256_norop_test {
         let projective_mont_point_g =
             norop_to_jacobi_sm2p256([mont_ori_point_g_x.as_ptr(), mont_ori_point_g_y.as_ptr()]);
         let scalar: &[Limb] = &[31 << 7, 0, 0, 0];
-        let lam: [Limb; 4] = [0, 0, 0, 0];
-        let pro_point: [*mut Limb; 3] = [
-            lam.clone().as_mut_ptr(),
-            lam.clone().as_mut_ptr(),
-            lam.clone().as_mut_ptr(),
-        ];
+        let mut lam0: [Limb; 4] = [0, 0, 0, 0];
+        let mut lam1: [Limb; 4] = [0, 0, 0, 0];
+        let mut lam2: [Limb; 4] = [0, 0, 0, 0];
+        let pro_point: [*mut Limb; 3] = [lam0.as_mut_ptr(), lam1.as_mut_ptr(), lam2.as_mut_ptr()];
         norop_point_mul_sm2p256(pro_point, projective_mont_point_g, scalar.as_ptr());
         unsafe {
             let r_x: &mut [Limb] = &mut [0, 0, 0, 0];
@@ -938,12 +933,10 @@ mod sm2p256_norop_test {
             0xfffffb8c00000324,
             0xfffffc4d0000064e,
         ];
-        let lam: [Limb; 4] = [0, 0, 0, 0];
-        let pro_point: [*mut Limb; 3] = [
-            lam.clone().as_mut_ptr(),
-            lam.clone().as_mut_ptr(),
-            lam.clone().as_mut_ptr(),
-        ];
+        let mut lam0: [Limb; 4] = [0, 0, 0, 0];
+        let mut lam1: [Limb; 4] = [0, 0, 0, 0];
+        let mut lam2: [Limb; 4] = [0, 0, 0, 0];
+        let pro_point: [*mut Limb; 3] = [lam0.as_mut_ptr(), lam1.as_mut_ptr(), lam2.as_mut_ptr()];
         norop_point_mul_base_sm2p256(pro_point, scalar.as_ptr());
 
         let mut nor_point = Point::new_at_infinity();
@@ -1140,12 +1133,10 @@ mod bigint_benches {
 
     #[bench]
     fn norop_point_add_sm2p256_bench(bench: &mut test::Bencher) {
-        let lam: [Limb; 4] = [0, 0, 0, 0];
-        let r: [*mut Limb; 3] = [
-            lam.clone().as_mut_ptr(),
-            lam.clone().as_mut_ptr(),
-            lam.clone().as_mut_ptr(),
-        ];
+        let mut lam0: [Limb; 4] = [0, 0, 0, 0];
+        let mut lam1: [Limb; 4] = [0, 0, 0, 0];
+        let mut lam2: [Limb; 4] = [0, 0, 0, 0];
+        let r: [*mut Limb; 3] = [lam0.as_mut_ptr(), lam1.as_mut_ptr(), lam2.as_mut_ptr()];
         let g_2_x: &[Limb] = &[
             0x0af037bfbc3be46a,
             0x83bdc9ba2d8fa938,
@@ -1166,12 +1157,10 @@ mod bigint_benches {
 
     #[bench]
     fn norop_point_double_sm2p256_bench(bench: &mut test::Bencher) {
-        let lam: [Limb; 4] = [0, 0, 0, 0];
-        let r: [*mut Limb; 3] = [
-            lam.clone().as_mut_ptr(),
-            lam.clone().as_mut_ptr(),
-            lam.clone().as_mut_ptr(),
-        ];
+        let mut lam0: [Limb; 4] = [0, 0, 0, 0];
+        let mut lam1: [Limb; 4] = [0, 0, 0, 0];
+        let mut lam2: [Limb; 4] = [0, 0, 0, 0];
+        let r: [*mut Limb; 3] = [lam0.as_mut_ptr(), lam1.as_mut_ptr(), lam2.as_mut_ptr()];
         let g_2_x: &[Limb] = &[
             0x0af037bfbc3be46a,
             0x83bdc9ba2d8fa938,
@@ -1192,7 +1181,9 @@ mod bigint_benches {
 
     #[bench]
     fn norop_point_mul_sm2p256_bench(bench: &mut test::Bencher) {
-        let lam: [Limb; 4] = [0, 0, 0, 0];
+        let mut lam0: [Limb; 4] = [0, 0, 0, 0];
+        let mut lam1: [Limb; 4] = [0, 0, 0, 0];
+        let mut lam2: [Limb; 4] = [0, 0, 0, 0];
         let g_2_x: &[Limb] = &[
             0x0af037bfbc3be46a,
             0x83bdc9ba2d8fa938,
@@ -1213,11 +1204,7 @@ mod bigint_benches {
             0xfffffc4d0000064e,
         ];
         bench.iter(|| {
-            let r: [*mut Limb; 3] = [
-                lam.clone().as_mut_ptr(),
-                lam.clone().as_mut_ptr(),
-                lam.clone().as_mut_ptr(),
-            ];
+            let r: [*mut Limb; 3] = [lam0.as_mut_ptr(), lam1.as_mut_ptr(), lam2.as_mut_ptr()];
             norop_point_mul_sm2p256(r, pro_g_2, scalar.as_ptr());
         });
     }
