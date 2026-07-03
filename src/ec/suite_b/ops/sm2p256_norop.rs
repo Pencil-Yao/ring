@@ -1038,38 +1038,6 @@ mod bigint_benches {
     extern crate test;
 
     #[bench]
-    fn bn_mul_mont_bench(bench: &mut test::Bencher) {
-        prefixed_extern! {
-            // `r` and/or 'a' and/or 'b' may alias.
-            fn bn_mul_mont(
-                r: *mut Limb,
-                a: *const Limb,
-                b: *const Limb,
-                n: *const Limb,
-                n0: &N0,
-                num_limbs: c::size_t,
-            );
-        }
-        let mut r: [Limb; 4] = [0, 0, 0, 0];
-        let a: &[Limb] = &[
-            0xfffff8950000053b,
-            0xfffffdc600000543,
-            0xfffffb8c00000324,
-            0xfffffc4d0000064e,
-        ];
-        bench.iter(|| unsafe {
-            bn_mul_mont(
-                r.as_mut_ptr(),
-                a.as_ptr(),
-                a.as_ptr(),
-                CURVE_PARAMS.p.as_ptr(),
-                &CURVE_PARAMS.n0,
-                CURVE_PARAMS.p.len(),
-            )
-        });
-    }
-
-    #[bench]
     fn sub_sm2p256_bench(bench: &mut test::Bencher) {
         let mut r: [Limb; 4] = [0, 0, 0, 0];
         let a: &[Limb] = &[
@@ -1112,7 +1080,7 @@ mod bigint_benches {
     #[bench]
     fn LIMBS_shl_mod_bench(bench: &mut test::Bencher) {
         prefixed_extern! {
-            fn LIMBS_shl_mod(r: *mut Limb, a: *const Limb, m: *const Limb, num_limbs: c::size_t);
+            unsafe fn LIMBS_shl_mod(r: *mut Limb, a: *const Limb, m: *const Limb, num_limbs: c::size_t);
         }
         let mut r: [Limb; 4] = [0, 0, 0, 0];
         let a: &[Limb] = &[

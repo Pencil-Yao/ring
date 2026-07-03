@@ -838,7 +838,6 @@ mod test {
 #[cfg(feature = "internal_benches")]
 mod internal_benches {
     use super::*;
-    use num_bigint::BigUint;
     extern crate test;
 
     #[bench]

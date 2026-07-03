@@ -288,8 +288,9 @@ mod internal_benches {
             0x0000000000000000,
             0x100000000,
         ];
+        let mut r = [0; 4];
         bench.iter(|| {
-            let _ = mont_pro_sm2p256_next(&a, &b);
+            let _ = mont_pro_sm2p256_next(&mut r, &a, &b);
         });
     }
 
@@ -420,7 +421,7 @@ mod internal_benches {
     #[bench]
     fn p256_point_add_bench(bench: &mut test::Bencher) {
         prefixed_extern! {
-            fn p256_point_add(
+            unsafe fn p256_point_add(
                 r: *mut Limb,   // [3][COMMON_OPS.num_limbs]
                 a: *const Limb, // [3][COMMON_OPS.num_limbs]
                 b: *const Limb, // [3][COMMON_OPS.num_limbs]
@@ -450,7 +451,7 @@ mod internal_benches {
     #[bench]
     fn p256_point_mul_bench(bench: &mut test::Bencher) {
         prefixed_extern! {
-            fn p256_point_mul(
+            unsafe fn p256_point_mul(
                 r: *mut Limb,          // [3][COMMON_OPS.num_limbs]
                 p_scalar: *const Limb, // [COMMON_OPS.num_limbs]
                 p_x: *const Limb,      // [COMMON_OPS.num_limbs]
@@ -490,7 +491,7 @@ mod internal_benches {
     #[bench]
     fn p256_point_mul_base_bench(bench: &mut test::Bencher) {
         prefixed_extern! {
-            fn p256_point_mul_base(
+            unsafe fn p256_point_mul_base(
                 r: *mut Limb,          // [3][COMMON_OPS.num_limbs]
                 g_scalar: *const Limb, // [COMMON_OPS.num_limbs]
             );
